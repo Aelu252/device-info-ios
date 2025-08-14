@@ -1,7 +1,7 @@
 name: Build unsigned iOS IPA
 
 on:
-  workflow_dispatch: # 手動で実行可能
+  workflow_dispatch:
 
 jobs:
   build-ios:
@@ -21,29 +21,29 @@ jobs:
 
       - name: Initialize React Native iOS project
         run: |
-          npx react-native init ios-info-app --version 0.73.0
+          npx react-native init IosInfoApp --version 0.73.0
           # コピーする場合は App.js を上書き
-          cp ../App.js ./ios-info-app/App.js
+          cp ../App.js ./IosInfoApp/App.js
 
       - name: Install project dependencies
         run: |
-          cd ios-info-app
+          cd IosInfoApp
           npm install
           npm install react-native-device-info
           npx pod-install ios
 
       - name: Build unsigned IPA
         run: |
-          cd ios-info-app/ios
+          cd IosInfoApp/ios
           xcodebuild \
-            -scheme ios-info-app \
+            -scheme IosInfoApp \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath build/ios-info-app.xcarchive archive \
+            -archivePath build/IosInfoApp.xcarchive archive \
             CODE_SIGNING_ALLOWED=NO
           
           xcodebuild -exportArchive \
-            -archivePath build/ios-info-app.xcarchive \
+            -archivePath build/IosInfoApp.xcarchive \
             -exportPath build \
             -exportOptionsPlist ../../exportOptions.plist \
             CODE_SIGNING_ALLOWED=NO
@@ -51,5 +51,5 @@ jobs:
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-info-app-unsigned
-          path: ios-info-app/ios/build/*.ipa
+          name: IosInfoApp-Unsigned
+          path: IosInfoApp/ios/build/*.ipa
