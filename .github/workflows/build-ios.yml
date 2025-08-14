@@ -1,0 +1,35 @@
+name: Build unsigned iOS IPA
+
+on:
+  workflow_dispatch: # 手動実行のみ
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build archive
+        run: |
+          xcodebuild \
+            -scheme DeviceInfoApp \
+            -sdk iphoneos \
+            -configuration Release \
+            archive -archivePath $PWD/build/DeviceInfoApp.xcarchive \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export unsigned IPA
+        run: |
+          mkdir -p unsigned
+          xcodebuild -exportArchive \
+            -archivePath $PWD/build/DeviceInfoApp.xcarchive \
+            -exportPath $PWD/unsigned \
+            -exportOptionsPlist ExportOptions.plist \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeviceInfoApp-Unsigned
+          path: unsigned/*.ipa
