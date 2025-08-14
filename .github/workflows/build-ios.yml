@@ -1,43 +1,55 @@
-name: Build iOS IPA
+name: Build unsigned iOS IPA
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # 手動で実行可能
 
 jobs:
   build-ios:
     runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Install Node.js
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install React Native CLI
+        run: npm install -g react-native-cli
 
-      - name: Install CocoaPods
+      - name: Initialize React Native iOS project
         run: |
-          cd ios
-          pod install
+          npx react-native init ios-info-app --version 0.73.0
+          # コピーする場合は App.js を上書き
+          cp ../App.js ./ios-info-app/App.js
 
-      - name: Build IPA (unsigned)
+      - name: Install project dependencies
         run: |
-          cd ios
+          cd ios-info-app
+          npm install
+          npm install react-native-device-info
+          npx pod-install ios
+
+      - name: Build unsigned IPA
+        run: |
+          cd ios-info-app/ios
           xcodebuild \
             -scheme ios-info-app \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath build/ios-info-app.xcarchive archive
-          xcodebuild \
-            -exportArchive \
+            -archivePath build/ios-info-app.xcarchive archive \
+            CODE_SIGNING_ALLOWED=NO
+          
+          xcodebuild -exportArchive \
             -archivePath build/ios-info-app.xcarchive \
-            -exportOptionsPlist exportOptions.plist \
-            -exportPath build
+            -exportPath build \
+            -exportOptionsPlist ../../exportOptions.plist \
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Upload IPA
+      - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-info-app
-          path: ios/build/*.ipa
+          name: ios-info-app-unsigned
+          path: ios-info-app/ios/build/*.ipa
