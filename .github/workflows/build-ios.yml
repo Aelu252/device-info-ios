@@ -1,35 +1,43 @@
-name: Build unsigned iOS IPA
+name: Build iOS IPA
 
 on:
-  workflow_dispatch: # 手動実行のみ
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-ios:
     runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build archive
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install CocoaPods
         run: |
+          cd ios
+          pod install
+
+      - name: Build IPA (unsigned)
+        run: |
+          cd ios
           xcodebuild \
-            -scheme DeviceInfoApp \
-            -sdk iphoneos \
+            -scheme ios-info-app \
             -configuration Release \
-            archive -archivePath $PWD/build/DeviceInfoApp.xcarchive \
-            CODE_SIGNING_ALLOWED=NO
+            -sdk iphoneos \
+            -archivePath build/ios-info-app.xcarchive archive
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/ios-info-app.xcarchive \
+            -exportOptionsPlist exportOptions.plist \
+            -exportPath build
 
-      - name: Export unsigned IPA
-        run: |
-          mkdir -p unsigned
-          xcodebuild -exportArchive \
-            -archivePath $PWD/build/DeviceInfoApp.xcarchive \
-            -exportPath $PWD/unsigned \
-            -exportOptionsPlist ExportOptions.plist \
-            CODE_SIGNING_ALLOWED=NO
-
-      - name: Upload unsigned IPA
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: DeviceInfoApp-Unsigned
-          path: unsigned/*.ipa
+          name: ios-info-app
+          path: ios/build/*.ipa
