@@ -16,16 +16,13 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install React Native CLI
-        run: npm install -g react-native-cli
-
-      - name: Initialize React Native iOS project
+      - name: Initialize React Native project
         run: |
-          npx react-native init IosInfoApp --version 0.73.0
-          # コピーする場合は App.js を上書き
+          npx react-native@latest init IosInfoApp
+          # App.js をコピー
           cp ../App.js ./IosInfoApp/App.js
 
-      - name: Install project dependencies
+      - name: Install dependencies
         run: |
           cd IosInfoApp
           npm install
